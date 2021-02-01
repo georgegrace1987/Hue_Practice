@@ -682,7 +682,11 @@ class HiveServerClient(object):
 
     LOG.info('Opening %s thrift session for user %s' % (self.query_server['server_name'], user.username))
 
-    req = TOpenSessionReq(**kwargs)
+    try:
+      req = TOpenSessionReq(**kwargs)
+    except Exception as e:
+      if 'Connection refused' in str(e):
+        reset_ha()
     res = self._client.OpenSession(req)
     self.coordinator_host = self._client.get_coordinator_host()
     if self.coordinator_host:

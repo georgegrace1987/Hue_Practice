@@ -103,6 +103,41 @@ class TestApi():
     assert_equal(data['tables'], [{'name': 'customer'}, {'name': 'opportunities'}])
 
 
+  def test_show_tables_hs2(self):
+    grant_access("test", "default", "metastore")
+    with patch('beeswax.server.dbms.get') as get:
+      with patch('beeswax.server.dbms.KazooClient') as KazooClient:
+        server_config = get_query_server_config(name='beeswax')
+        KazooClient.return_value = Mock(
+          # Bug "TypeError: expected string or buffer" if False, to add a new test case and fix
+          exists=Mock(return_value=True),
+          get_children=Mock(
+            return_value=['serverUri=hive-llap-1.gethue.com:10000;serverUri=hive-llap-2.gethue.com:10000'])
+        )
+        get.return_value = Mock(
+          get_databases=Mock(
+            return_value=['sfdc']
+          ),
+          get_database=Mock(
+            return_value={}
+          ),
+          get_tables_meta=Mock(
+            return_value=[{'name': 'customer'}, {'name': 'opportunities'}]
+          ),
+          server_name='hive'
+        )
+
+        response = self.client.post('/metastore/tables/sfdc?format=json')
+
+        get.assert_called()
+
+    assert_equal(response.status_code, 200)
+    data = json.loads(response.content)
+    assert_equal(data['status'], 0)
+    assert_equal(data['table_names'], ['customer', 'opportunities'])
+    assert_equal(data['tables'], [{'name': 'customer'}, {'name': 'opportunities'}])
+
+
 class TestMetastoreWithHadoop(BeeswaxSampleProvider):
   requires_hadoop = True
   integration = True
