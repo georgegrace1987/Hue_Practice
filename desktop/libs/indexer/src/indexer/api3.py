@@ -216,6 +216,7 @@ def guess_field_types(request):
     path = urllib_unquote(file_format["path"])
     stream = request.fs.open(path)
     encoding = check_encoding(stream.read(10000))
+    LOG.debug('File %s encoding is %s' % (path, encoding))
     stream.seek(0)
     _convert_format(file_format["format"], inverse=True)
 
