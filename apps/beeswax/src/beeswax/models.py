@@ -471,10 +471,20 @@ class Session(models.Model):
   objects = SessionManager()
 
   def get_handle(self):
-    secret, guid = HiveServerQueryHandle.get_decoded(secret=self.secret, guid=self.guid)
+    secret, guid = self.get_adjusted_guid_secret()
+    secret, guid = HiveServerQueryHandle.get_decoded(secret=secret, guid=guid)
 
     handle_id = THandleIdentifier(secret=secret, guid=guid)
     return TSessionHandle(sessionId=handle_id)
+
+  def get_adjusted_guid_secret(self):
+    secret = self.secret
+    guid = self.guid
+    if sys.version_info[0] > 2 and not isinstance(self.secret, bytes) and not isinstance(self.guid, bytes):
+      # only for py3, after bytes saved, bytes wrapped in a string object
+      secret = eval(secret)
+      guid = eval(guid)
+    return secret, guid
 
   def get_properties(self):
     return json.loads(self.properties) if self.properties else {}

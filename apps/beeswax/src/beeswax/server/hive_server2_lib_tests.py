@@ -64,6 +64,7 @@ class TestHiveServerClient():
     )
 
     with patch('beeswax.server.hive_server2_lib.thrift_util.get_client') as get_client:
+      original_secret = original_guid = b'1'
       get_client.return_value = Mock(
         OpenSession=Mock(
           return_value=Mock(
@@ -73,8 +74,8 @@ class TestHiveServerClient():
             configuration={},
             sessionHandle=Mock(
               sessionId=Mock(
-                secret=b'1',
-                guid=b'1'
+                secret=original_secret,
+                guid=original_guid
               )
             ),
             serverProtocolVersion=11
@@ -91,9 +92,14 @@ class TestHiveServerClient():
         session_count + 1,  # +1 as setUp resets the user which deletes cascade the sessions
         Session.objects.filter(owner=self.user, application=self.query_server['server_name']).count()
       )
+      secret, guid = Session.objects.get_session(self.user, self.query_server['server_name']).get_adjusted_guid_secret()
       assert_equal(
-        str(session.guid),
-        Session.objects.get_session(self.user, self.query_server['server_name']).guid
+        original_secret,
+        secret
+      )
+      assert_equal(
+        original_guid,
+        guid
       )
 
   def test_get_configuration(self):
