@@ -65,7 +65,9 @@ class AtlasApi(Api):
   def __init__(self, user=None):
     super(AtlasApi, self).__init__(user)
 
-    self._api_url = CATALOG.API_URL.get().strip('/') + "/api/atlas"
+    # selecting the first atlas server from the list of server if there are multiple server with comma seperated
+    atlas_server_to_use = CATALOG.API_URL.get().split(',')[0].replace("'","").replace("[","")
+    self._api_url = atlas_server_to_use.strip('/') + "/api/atlas"
     self._username = CATALOG.SERVER_USER.get()
     self._password = CATALOG.SERVER_PASSWORD.get()
 
